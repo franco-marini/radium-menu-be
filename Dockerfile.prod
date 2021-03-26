@@ -1,0 +1,6 @@
+FROM node:12.18.3
+WORKDIR /usr/backend
+COPY ./dist ./dist
+COPY package.json .
+RUN yarn
+RUN ls -a

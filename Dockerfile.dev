@@ -1,0 +1,6 @@
+FROM node:12.18.3
+WORKDIR /usr/backend
+COPY . .
+RUN yarn --quiet
+EXPOSE 5000
+CMD ["yarn", "run", "start"]
