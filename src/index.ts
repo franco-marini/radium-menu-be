@@ -10,12 +10,12 @@ import { GraphQLError } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
 import { makeExecutableSchema } from 'graphql-tools';
 import mongoose from 'mongoose';
+dotenv.config();
 
 import ExecutableSchema from './graphql';
 import context from './graphql/context';
+import permissions from './graphql/permissions';
 import { firebaseConfig } from './helpers/firebaseConfig';
-
-dotenv.config();
 
 // Server and port initializations
 const app = express();
@@ -37,7 +37,7 @@ export const fb = firebase.initializeApp(firebaseConfig);
 const schema = makeExecutableSchema(ExecutableSchema);
 
 const server: any = new ApolloServer({
-  schema: applyMiddleware(schema),
+  schema: applyMiddleware(schema, permissions),
   context,
   formatError: (error: GraphQLError) => {
     return error;
