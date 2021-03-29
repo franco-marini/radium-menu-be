@@ -3,3 +3,9 @@ export enum STATUS {
   DEACTIVATE = 'DEACTIVATE',
   DELETED = 'DELETED',
 }
+
+export enum ROLES {
+  ADMIN = 'ADMIN',
+  CHEF = 'CHEF',
+  USER = 'USER',
+}

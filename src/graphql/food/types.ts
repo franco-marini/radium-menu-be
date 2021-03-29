@@ -24,12 +24,12 @@ export const foodDefs = gql`
     price: Float!
   }
 
-  type Query {
+  extend type Query {
     allFoods(filter: String): [Food]
     usersFoods(filter: String): [Food]
   }
 
-  type Mutation {
+  extend type Mutation {
     createFood(input: FoodInputCreate!): Food
     updateFood(input: FoodInputUpdate!): Food
     deleteFood(id: String!): Food
