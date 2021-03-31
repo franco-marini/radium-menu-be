@@ -1,3 +1,4 @@
+import { https } from 'firebase-functions';
 import { ApolloServer } from 'apollo-server-express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -36,16 +37,14 @@ export const fb = firebase.initializeApp(firebaseConfig);
 
 const schema = makeExecutableSchema(ExecutableSchema);
 
-const server: any = new ApolloServer({
+const server = new ApolloServer({
   schema: applyMiddleware(schema, permissions),
   context,
-  formatError: (error: GraphQLError) => {
-    return error;
-  },
+  formatError: (error: GraphQLError) => error,
 });
 
 server.applyMiddleware({
-  app: router,
+  app,
 });
 
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
@@ -64,7 +63,7 @@ if (process.env.ENVIRONMENT !== 'test') {
       useUnifiedTopology: true,
     })
     .then(() => console.log('DB connected ✅'))
-    .catch((err) => console.log('Opps! Something went wrong ❌', err));
+    .catch(err => console.log('Opps! Something went wrong ❌', err));
 }
 
 // Routes
@@ -81,4 +80,5 @@ if (process.env.ENVIRONMENT !== 'test') {
   });
 }
 
-export default app;
+const api = https.onRequest(app);
+export default api;

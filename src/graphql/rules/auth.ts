@@ -6,29 +6,21 @@ import passwordManager from '../../helpers/passwordManager';
 import User from '../../models/user';
 import * as Errors from '../../types/enums/error-messages';
 
-const isValidPassword = rule()(
-  async (parent, args: { username: string; password: string }) => {
-    const user = await User.findOne({
-      $or: [
-        { username: formatUsername(args.username) },
-        { email: args.username },
-      ],
-    });
+const isValidPassword = rule()(async (parent, args: { username: string; password: string }) => {
+  const user = await User.findOne({
+    $or: [{ username: formatUsername(args.username) }, { email: args.username }],
+  });
 
-    if (!user) {
-      return new ApolloError(Errors.SignUpErrors.invalidUsernamePassword);
-    }
-    const checkPassword = await passwordManager.decryptPassword(
-      args.password,
-      user.password,
-    );
+  if (!user) {
+    return new ApolloError(Errors.SignUpErrors.invalidUsernamePassword);
+  }
+  const checkPassword = await passwordManager.decryptPassword(args.password, user.password);
 
-    if (!checkPassword) {
-      return new ApolloError(Errors.SignUpErrors.invalidUsernamePassword);
-    }
-    return checkPassword;
-  },
-);
+  if (!checkPassword) {
+    return new ApolloError(Errors.SignUpErrors.invalidUsernamePassword);
+  }
+  return checkPassword;
+});
 
 const isUniqueUser = rule()(async (parent, args, ctx, info) => {
   const isEdit: boolean = args.input.id ? true : false;
@@ -39,7 +31,7 @@ const isUniqueUser = rule()(async (parent, args, ctx, info) => {
   if (checkUniqueUser) {
     if (isEdit) {
       const checkUserById = await User.findOne({ _id: args.input.id });
-      if (checkUserById.username === userFormat) {
+      if (checkUserById?.username === userFormat) {
         return true;
       }
     }
@@ -49,7 +41,7 @@ const isUniqueUser = rule()(async (parent, args, ctx, info) => {
 });
 
 const isUniqueEmail = rule()(async (parent, args, ctx, info) => {
-  const isEdit: boolean = !!args.input.id;
+  const isEdit = !!args.input.id;
   const { email } = args.input;
   const checkUniqueUserEmail = await User.findOne({
     email,
@@ -57,7 +49,7 @@ const isUniqueEmail = rule()(async (parent, args, ctx, info) => {
   if (checkUniqueUserEmail) {
     if (isEdit) {
       const checkUserById = await User.findOne({ _id: args.input.id });
-      if (checkUserById.email === email) {
+      if (checkUserById?.email === email) {
         return true;
       }
     }

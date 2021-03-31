@@ -19,7 +19,7 @@ export const signUp = async (
   const encryptedPassword = await passwordManager.encryptPassword(password);
   fb.auth()
     .createUserWithEmailAndPassword(email, encryptedPassword)
-    .catch((error) => {
+    .catch(error => {
       console.log(error);
     });
   const NewUser = new User({
@@ -39,17 +39,20 @@ export const signIn = async (user: string, pass: string) => {
     $or: [{ username: formatUsername(user) }, { email: user }],
   });
 
-  const customToken = await fbAdmin.auth().createCustomToken(logUser.id);
-  await fb.auth().signInWithCustomToken(customToken);
-  const idToken = await fb
-    .auth()
-    .currentUser.getIdToken(/* forceRefresh */ true);
+  if (logUser) {
+    const customToken = await fbAdmin.auth().createCustomToken(logUser.id);
+    await fb.auth().signInWithCustomToken(customToken);
+    const currentUser = await fb.auth().currentUser;
+    if (!currentUser) return new ApolloError(Errors.SignInErrors.noUserFound);
+    const idToken = currentUser && (await currentUser.getIdToken(/* forceRefresh */ true));
 
-  return {
-    username: logUser.username,
-    userToken: idToken,
-    userRole: logUser.role,
-  };
+    return {
+      username: logUser.username,
+      userToken: idToken,
+      userRole: logUser.role,
+    };
+  }
+  return new ApolloError(Errors.SignInErrors.noUserFound);
 };
 
 export const getUser = async (id: string) =>
@@ -67,20 +70,20 @@ export const updateUser = async (
   role: ROLES,
 ) => {
   const userToUpdate = await User.findById(id);
-  if (!userToUpdate.email) {
+  if (!userToUpdate?.email) {
     const encryptedPassword = await passwordManager.encryptPassword('password');
     fb.auth()
       .createUserWithEmailAndPassword(email, encryptedPassword)
-      .catch((error) => {
+      .catch(error => {
         console.log(error);
       });
-  } else if (userToUpdate.email !== email) {
+  } else if (userToUpdate?.email !== email) {
     fb.auth()
-      .signInWithEmailAndPassword(userToUpdate.email, userToUpdate.password)
-      .then((userCredential) => {
-        userCredential.user.updateEmail(email);
+      .signInWithEmailAndPassword(userToUpdate?.email, userToUpdate?.password)
+      .then(userCredential => {
+        userCredential?.user?.updateEmail(email);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error(error);
       });
   }
@@ -104,15 +107,13 @@ export const updatePasswordUser = async (id: string, password: string) => {
   const userToUpdate = await User.findById(id);
   const encryptedPassword = passwordManager.encryptPassword(password);
 
-  if (userToUpdate.email) {
+  if (userToUpdate?.email) {
     fb.auth()
       .signInWithEmailAndPassword(userToUpdate.email, userToUpdate.password)
-      .then((userCredential) => {
-        userCredential.user.updatePassword(encryptedPassword);
+      .then(userCredential => {
+        userCredential?.user?.updatePassword(encryptedPassword);
       })
-      .catch((error) => {
-        console.error(error);
-      });
+      .catch(error => new ApolloError(error));
   } else {
     return new ApolloError(Errors.Validation.changePasswordUser);
   }
@@ -149,7 +150,7 @@ export const sendEmailPassword = async (email: string) => {
   if (res !== null) {
     fb.auth()
       .sendPasswordResetEmail(email)
-      .catch((error) => {
+      .catch(error => {
         console.log(error);
       });
   }
@@ -157,21 +158,16 @@ export const sendEmailPassword = async (email: string) => {
   return { email: response };
 };
 
-export const confirmPasswordReset = (
-  actionCode: string,
-  newPassword: string,
-) => {
+export const confirmPasswordReset = (actionCode: string, newPassword: string) => {
   const response = fb
     .auth()
     .verifyPasswordResetCode(actionCode)
-    .then(async (email) => {
+    .then(async email => {
       await fb
         .auth()
         .confirmPasswordReset(actionCode, newPassword)
         .then(async () => {
-          const encryptedPassword = passwordManager.encryptPassword(
-            newPassword,
-          );
+          const encryptedPassword = passwordManager.encryptPassword(newPassword);
           await User.findOneAndUpdate(
             { email },
             {
@@ -180,12 +176,12 @@ export const confirmPasswordReset = (
             { new: true },
           );
         })
-        .catch((error) => {
+        .catch(error => {
           console.error(error);
         });
       return true;
     })
-    .catch((error) => {
+    .catch(error => {
       console.error(error);
       return false;
     });
@@ -193,7 +189,9 @@ export const confirmPasswordReset = (
 };
 
 export const getUserByToken = async () => {
-  const idToken = await fb.auth().currentUser.getIdToken(true);
+  const currentUser = await fb.auth().currentUser;
+  if (!currentUser) return new ApolloError(Errors.SignInErrors.noUserFound);
+  const idToken = currentUser && (await currentUser.getIdToken(/* forceRefresh */ true));
   const response = await fbAdmin.auth().verifyIdToken(idToken);
   if (!response) {
     return {
@@ -202,12 +200,12 @@ export const getUserByToken = async () => {
   }
   const userFound = await User.findById(response.uid);
   return {
-    username: userFound.username,
+    username: userFound?.username,
     token: idToken,
   };
 };
 
-export const getUsers = async (filter: string = '') =>
+export const getUsers = async (filter = '') =>
   User.find({
     $and: [
       {
@@ -229,17 +227,17 @@ export const signInMobile = async (user: string, pass: string) => {
     $or: [{ username: formatUsername(user) }, { email: user }],
   });
 
-  const idToken = await fb
-    .auth()
-    .currentUser.getIdToken(/* forceRefresh */ true);
+  const currentUser = await fb.auth().currentUser;
+  if (!currentUser) return new ApolloError(Errors.SignInErrors.noUserFound);
+  const idToken = currentUser && (await currentUser.getIdToken(/* forceRefresh */ true));
 
   return {
-    username: logUser.username,
+    username: logUser?.username,
     userToken: idToken,
-    userRole: logUser.role,
-    firstName: logUser.firstName,
-    lastName: logUser.lastName,
-    email: logUser.email,
+    userRole: logUser?.role,
+    firstName: logUser?.firstName,
+    lastName: logUser?.lastName,
+    email: logUser?.email,
   };
 };
 
@@ -247,10 +245,8 @@ export const signOut = () => {
   const response = fb
     .auth()
     .signOut()
-    .then(() => {
-      return true;
-    })
-    .catch((error) => {
+    .then(() => true)
+    .catch(error => {
       console.error(error);
       return false;
     });

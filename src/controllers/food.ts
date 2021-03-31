@@ -2,7 +2,7 @@ import Food from '../models/food';
 import { STATUS } from '../types/enums';
 import { ICrateFood, IUpdateFood } from '../types/food';
 
-const getUsersFoods = async (filter: string = '') =>
+const getUsersFoods = async (filter = '') =>
   Food.find({
     $and: [
       {
@@ -15,7 +15,7 @@ const getUsersFoods = async (filter: string = '') =>
     ],
   });
 
-const getAllFoods = async (filter: string = '') =>
+const getAllFoods = async (filter = '') =>
   Food.find({
     $and: [
       {
@@ -37,13 +37,7 @@ const createFood = async ({ name, description, price }: ICrateFood) => {
   return savedFood;
 };
 
-const updateFood = async ({
-  id,
-  name,
-  description,
-  price,
-  status,
-}: IUpdateFood) =>
+const updateFood = async ({ id, name, description, price, status }: IUpdateFood) =>
   Food.findOneAndUpdate(
     { _id: id },
     {

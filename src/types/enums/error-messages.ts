@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export enum SignUpErrors {
   invalidUsernamePassword = 'Invalid username or password',
   invalidUsername = 'Username already taken',
@@ -18,6 +19,7 @@ export enum AuthErrors {
 
 export enum FbAuthErrors {
   getIdToken = 'There was an error getting the IdToken from firebase',
+  firebase = 'There was an error from firebase',
 }
 
 export enum Validation {

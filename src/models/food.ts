@@ -1,4 +1,4 @@
-import { Document, model, Schema } from 'mongoose';
+import { model, Schema } from 'mongoose';
 
 import { STATUS } from '../types/enums';
 import { IFood } from '../types/food';

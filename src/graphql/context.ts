@@ -11,12 +11,10 @@ interface ContextParam extends Request {
 }
 
 export interface ContextResponse {
-  user: IUser;
+  user: IUser | null;
 }
 
-export type Context = (x: ContextParam) => Promise<ContextResponse>;
-
-const context: Context = async ({ req }) => {
+const context = async ({ req }: ContextParam): Promise<ContextResponse> => {
   try {
     const authToken = req.headers.authorization;
 

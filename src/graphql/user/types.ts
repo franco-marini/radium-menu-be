@@ -96,10 +96,7 @@ export const userDefs = gql`
     updatePasswordUser(input: UpdatePasswordUserInput): User
     deleteUser(id: ID!): User
     sendEmailPassword(email: String!): SendEmailPassword
-    confirmPasswordReset(
-      actionCode: String!
-      newPassword: String!
-    ): ConfirmPasswordReset
+    confirmPasswordReset(actionCode: String!, newPassword: String!): ConfirmPasswordReset
     signOut: SignOut
   }
 `;
