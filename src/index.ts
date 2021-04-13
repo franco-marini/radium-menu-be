@@ -34,13 +34,17 @@ const adminFirebaseConfig = {
 
 export const fbAdmin = admin.initializeApp(adminFirebaseConfig);
 export const fb = firebase.initializeApp(firebaseConfig);
+export const database = fbAdmin.firestore();
 
 const schema = makeExecutableSchema(ExecutableSchema);
 
 const server = new ApolloServer({
   schema: applyMiddleware(schema, permissions),
   context,
-  formatError: (error: GraphQLError) => error,
+  formatError: (error: GraphQLError) => {
+    console.log('GraphQl error: ', error);
+    return error;
+  },
 });
 
 server.applyMiddleware({
@@ -63,7 +67,7 @@ if (process.env.ENVIRONMENT !== 'test') {
       useUnifiedTopology: true,
     })
     .then(() => console.log('DB connected ✅'))
-    .catch(err => console.log('Opps! Something went wrong ❌', err));
+    .catch(err => console.log('Oops! Something went wrong ❌', err));
 }
 
 // Routes

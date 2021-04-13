@@ -23,6 +23,6 @@ export enum FbAuthErrors {
 }
 
 export enum Validation {
-  questionType = 'Invalid question type',
+  notFound = 'Not found',
   changePasswordUser = 'User without email cannot change password',
 }

@@ -1,66 +1,86 @@
-import Food from '../models/food';
 import { STATUS } from '../types/enums';
-import { ICrateFood, IUpdateFood } from '../types/food';
+import { Validation } from '../types/enums/error-messages';
+import { ICrateFood, IFood, IUpdateFood } from '../types/food';
+import { database } from '../';
 
-const getUsersFoods = async (filter = '') =>
-  Food.find({
-    $and: [
-      {
-        $or: [{ name: { $regex: filter, $options: 'i' } }],
-      },
-      {
-        status: STATUS.ACTIVE,
-        deleted: false,
-      },
-    ],
-  });
+const getUsersFoods = async (filter = '') => {
+  const allFoods: IFood[] = [];
+  const foodsRef = database.collection('foods');
+  const queryRef = await foodsRef.where('status', '!=', STATUS.DELETED).get();
+  queryRef.forEach((doc: any) => allFoods.push(doc.data()));
+  if (filter !== '') {
+    const filteredFood = allFoods.filter(food =>
+      food.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase()),
+    );
+    return filteredFood;
+  }
+  return allFoods;
+};
 
-const getAllFoods = async (filter = '') =>
-  Food.find({
-    $and: [
-      {
-        $or: [{ name: { $regex: filter, $options: 'i' } }],
-      },
-      {
-        deleted: false,
-      },
-    ],
-  });
+const getAllFoods = async (filter = '') => {
+  const allFoods: IFood[] = [];
+  const foodsRef = database.collection('foods');
+  const queryRef = await foodsRef.where('status', '!=', STATUS.DELETED).get();
+  queryRef.forEach((doc: any) => allFoods.push(doc.data()));
+  if (filter !== '') {
+    const filteredFood = allFoods.filter(food =>
+      food.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase()),
+    );
+    return filteredFood;
+  }
+  return allFoods;
+};
 
 const createFood = async ({ name, description, price }: ICrateFood) => {
-  const NewFood = new Food({
+  const entry = database.collection('foods').doc();
+  const newFood = {
+    id: entry.id,
     name,
     description,
     price,
-  });
-  const savedFood = await NewFood.save();
-  return savedFood;
+    status: STATUS.ACTIVE,
+    deleted: false,
+  };
+
+  entry.set(newFood);
+  return newFood;
 };
 
-const updateFood = async ({ id, name, description, price, status }: IUpdateFood) =>
-  Food.findOneAndUpdate(
-    { _id: id },
-    {
-      name,
-      description,
-      price,
-      status,
-    },
-    { new: true },
-  );
+const updateFood = async ({ id, name, description, price, status }: IUpdateFood) => {
+  const entry = database.collection('foods').doc(id);
+  const currentData = (await entry.get()).data();
+  if (currentData) {
+    const updatedFood = {
+      ...currentData,
+      name: name || currentData.name,
+      description: description || currentData.description,
+      price: price || currentData.price,
+      status: status || currentData.status,
+    };
 
-const deleteFood = async (id: string) =>
-  Food.findOneAndUpdate(
-    {
-      _id: id,
-      deleted: false,
-    },
-    {
+    await entry.set(updatedFood).catch(error => {
+      throw new Error(error);
+    });
+    return updatedFood;
+  } else throw new Error(Validation.notFound);
+};
+
+const deleteFood = async (id: string) => {
+  const entry = database.collection('foods').doc(id);
+  const currentData = (await entry.get()).data();
+  if (currentData) {
+    const deletedFood = {
+      ...currentData,
       status: STATUS.DELETED,
       deleted: true,
-    },
-    { new: true },
-  );
+    };
+
+    await entry.set(deletedFood).catch(error => {
+      throw new Error(error);
+    });
+    return deletedFood;
+  } else throw new Error(Validation.notFound);
+};
 
 export default {
   createFood,
