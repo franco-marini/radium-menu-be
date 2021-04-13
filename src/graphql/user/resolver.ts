@@ -10,14 +10,14 @@ export const userResolvers = {
   Mutation: {
     signUp: (
       _: unknown,
-      { input: { username, email, firstName, lastName, password, role } }: ISignUpUserInput,
-    ) => users.signUp(username, email, firstName, lastName, password, role),
-    signIn: (_: unknown, { username, password }: { username: string; password: string }) =>
-      users.signIn(username, password),
+      { input: { email, firstName, lastName, password, role } }: ISignUpUserInput,
+    ) => users.signUp(email, firstName, lastName, password, role),
+    signIn: (_: unknown, { email, password }: { email: string; password: string }) =>
+      users.signIn(email, password),
     updateUser: (
       _: unknown,
-      { input: { id, username, email, firstName, lastName, isActive, role } }: IUpdateUserInput,
-    ) => users.updateUser(id, username, email, firstName, lastName, isActive, role),
+      { input: { id, email, firstName, lastName, isActive, role } }: IUpdateUserInput,
+    ) => users.updateUser(id, email, firstName, lastName, isActive, role),
     updatePasswordUser: (_: unknown, { input: { id, password } }: IUpdateUserInput) =>
       users.updatePasswordUser(id, password),
     deleteUser: (_: unknown, { id }: { id: string }) => users.deleteUser(id),

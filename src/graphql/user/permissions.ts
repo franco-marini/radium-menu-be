@@ -8,13 +8,8 @@ export const permissionsUser = {
   },
   Mutation: {
     signIn: and(rules.auth.isValidPassword),
-    signUp: and(rules.auth.isUniqueUser, rules.auth.isUniqueEmail),
-    updateUser: and(
-      rules.isAuthenticated,
-      rules.auth.isUniqueUser,
-      rules.auth.isUniqueEmail,
-      or(rules.roles.isAdmin),
-    ),
+    signUp: and(rules.auth.isUniqueEmail),
+    updateUser: and(rules.isAuthenticated, rules.auth.isUniqueEmail, or(rules.roles.isAdmin)),
     updatePasswordUser: and(rules.isAuthenticated, or(rules.roles.isAdmin)),
     deleteUser: and(rules.isAuthenticated, or(rules.roles.isAdmin)),
   },

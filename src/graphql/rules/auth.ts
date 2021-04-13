@@ -1,15 +1,14 @@
 import { ApolloError } from 'apollo-server-express';
 import { rule } from 'graphql-shield';
 
-import formatUsername from '../../helpers/formatUsername';
 import passwordManager from '../../helpers/passwordManager';
-import User from '../../models/user';
 import * as Errors from '../../types/enums/error-messages';
+import { database } from '../..';
 
-const isValidPassword = rule()(async (parent, args: { username: string; password: string }) => {
-  const user = await User.findOne({
-    $or: [{ username: formatUsername(args.username) }, { email: args.username }],
-  });
+const isValidPassword = rule()(async (parent, args: { email: string; password: string }) => {
+  const usersRef = database.collection('users').doc(args.email);
+  const doc = await usersRef.get();
+  const user = doc.data();
 
   if (!user) {
     return new ApolloError(Errors.SignUpErrors.invalidUsernamePassword);
@@ -22,34 +21,18 @@ const isValidPassword = rule()(async (parent, args: { username: string; password
   return checkPassword;
 });
 
-const isUniqueUser = rule()(async (parent, args, ctx, info) => {
-  const isEdit: boolean = args.input.id ? true : false;
-  const userFormat = formatUsername(args.input.username);
-  const checkUniqueUser = await User.findOne({
-    username: userFormat,
-  });
-  if (checkUniqueUser) {
-    if (isEdit) {
-      const checkUserById = await User.findOne({ _id: args.input.id });
-      if (checkUserById?.username === userFormat) {
-        return true;
-      }
-    }
-    return new ApolloError(Errors.SignUpErrors.invalidUsername);
-  }
-  return true;
-});
-
 const isUniqueEmail = rule()(async (parent, args, ctx, info) => {
   const isEdit = !!args.input.id;
   const { email } = args.input;
-  const checkUniqueUserEmail = await User.findOne({
-    email,
-  });
+  const usersRef = database.collection('users');
+  const doc = await usersRef.doc(email).get();
+  const checkUniqueUserEmail = doc.data();
   if (checkUniqueUserEmail) {
     if (isEdit) {
-      const checkUserById = await User.findOne({ _id: args.input.id });
-      if (checkUserById?.email === email) {
+      const queryRef = await usersRef.where('id', '==', args.input.id).get();
+      let checkUserById = false;
+      queryRef.forEach((doc: any) => (checkUserById = doc.data().id === args.input.id));
+      if (checkUserById) {
         return true;
       }
     }
@@ -60,6 +43,5 @@ const isUniqueEmail = rule()(async (parent, args, ctx, info) => {
 
 export default {
   isValidPassword,
-  isUniqueUser,
   isUniqueEmail,
 };

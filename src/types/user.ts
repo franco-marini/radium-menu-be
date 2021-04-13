@@ -1,9 +1,7 @@
-import { Document } from 'mongoose';
-
 import { ROLES } from '../types/enums';
 
-export interface IUser extends Document {
-  username: string;
+export interface IUser {
+  id: string;
   email: string;
   firstName: string;
   lastName: string;

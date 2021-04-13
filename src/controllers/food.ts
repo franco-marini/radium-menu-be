@@ -1,3 +1,6 @@
+import { ApolloError } from 'apollo-server-express';
+import { firestore } from 'firebase-admin';
+
 import { STATUS } from '../types/enums';
 import { Validation } from '../types/enums/error-messages';
 import { ICrateFood, IFood, IUpdateFood } from '../types/food';
@@ -40,6 +43,8 @@ const createFood = async ({ name, description, price }: ICrateFood) => {
     price,
     status: STATUS.ACTIVE,
     deleted: false,
+    createdAt: firestore.FieldValue.serverTimestamp(),
+    updatedAt: firestore.FieldValue.serverTimestamp(),
   };
 
   entry.set(newFood);
@@ -56,13 +61,14 @@ const updateFood = async ({ id, name, description, price, status }: IUpdateFood)
       description: description || currentData.description,
       price: price || currentData.price,
       status: status || currentData.status,
+      updatedAt: firestore.FieldValue.serverTimestamp(),
     };
 
     await entry.set(updatedFood).catch(error => {
-      throw new Error(error);
+      throw new ApolloError(error);
     });
     return updatedFood;
-  } else throw new Error(Validation.notFound);
+  } else throw new ApolloError(Validation.notFound);
 };
 
 const deleteFood = async (id: string) => {
@@ -73,13 +79,14 @@ const deleteFood = async (id: string) => {
       ...currentData,
       status: STATUS.DELETED,
       deleted: true,
+      updatedAt: firestore.FieldValue.serverTimestamp(),
     };
 
     await entry.set(deletedFood).catch(error => {
-      throw new Error(error);
+      throw new ApolloError(error);
     });
     return deletedFood;
-  } else throw new Error(Validation.notFound);
+  } else throw new ApolloError(Validation.notFound);
 };
 
 export default {

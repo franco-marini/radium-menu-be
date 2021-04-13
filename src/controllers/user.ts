@@ -1,15 +1,14 @@
 import { ApolloError } from 'apollo-server-express';
+import { firestore } from 'firebase-admin';
 
 import formatString from '../helpers/formatString';
-import formatUsername from '../helpers/formatUsername';
 import passwordManager from '../helpers/passwordManager';
-import { fb, fbAdmin } from '../index';
-import User from '../models/user';
 import { ROLES } from '../types/enums';
+import { IUser } from '../types/user';
 import * as Errors from '../types/enums/error-messages';
+import { fb, fbAdmin, database } from '../';
 
 export const signUp = async (
-  username: string,
   email: string,
   firstName: string,
   lastName: string,
@@ -22,22 +21,27 @@ export const signUp = async (
     .catch(error => {
       console.log(error);
     });
-  const NewUser = new User({
-    username: formatUsername(username),
+
+  const entry = database.collection('users').doc(email);
+  const newUser = {
+    id: entry.id,
     email,
     firstName: formatString(firstName),
     lastName: formatString(lastName),
     password: encryptedPassword,
     role,
-  });
-  const savedUser = await NewUser.save();
-  return savedUser;
+    createdAt: firestore.FieldValue.serverTimestamp(),
+    updatedAt: firestore.FieldValue.serverTimestamp(),
+  };
+
+  entry.set(newUser);
+  return newUser;
 };
 
 export const signIn = async (user: string, pass: string) => {
-  const logUser = await User.findOne({
-    $or: [{ username: formatUsername(user) }, { email: user }],
-  });
+  const usersRef = database.collection('users').doc(user);
+  const doc = await usersRef.get();
+  const logUser = doc.data();
 
   if (logUser) {
     const customToken = await fbAdmin.auth().createCustomToken(logUser.id);
@@ -47,7 +51,7 @@ export const signIn = async (user: string, pass: string) => {
     const idToken = currentUser && (await currentUser.getIdToken(/* forceRefresh */ true));
 
     return {
-      username: logUser.username,
+      email: logUser.email,
       userToken: idToken,
       userRole: logUser.role,
     };
@@ -55,21 +59,23 @@ export const signIn = async (user: string, pass: string) => {
   return new ApolloError(Errors.SignInErrors.noUserFound);
 };
 
-export const getUser = async (id: string) =>
-  User.findOne({
-    _id: id,
-  });
+export const getUser = async (email: string) => {
+  const usersRef = database.collection('users').doc(email);
+  const doc = await usersRef.get();
+  return doc.data();
+};
 
 export const updateUser = async (
   id: string,
-  username: string,
   email: string,
   firstName: string,
   lastName: string,
   isActive: boolean,
   role: ROLES,
 ) => {
-  const userToUpdate = await User.findById(id);
+  const usersRef = database.collection('users').doc(email);
+  const doc = await usersRef.get();
+  const userToUpdate = doc.data();
   if (!userToUpdate?.email) {
     const encryptedPassword = await passwordManager.encryptPassword('password');
     fb.auth()
@@ -88,23 +94,24 @@ export const updateUser = async (
       });
   }
 
-  const response = await User.findOneAndUpdate(
-    { _id: id },
-    {
-      username: formatUsername(username),
-      email,
-      firstName: formatString(firstName),
-      lastName: formatString(lastName),
-      role,
-      isActive,
-    },
-    { new: true },
-  );
+  const updatedUser = {
+    id,
+    email,
+    firstName: formatString(firstName),
+    lastName: formatString(lastName),
+    role,
+    isActive,
+    updatedAt: firestore.FieldValue.serverTimestamp(),
+  };
+
+  const response = await usersRef.update(updatedUser);
   return response;
 };
 
-export const updatePasswordUser = async (id: string, password: string) => {
-  const userToUpdate = await User.findById(id);
+export const updatePasswordUser = async (email: string, password: string) => {
+  const usersRef = database.collection('users').doc(email);
+  const doc = await usersRef.get();
+  const userToUpdate = doc.data();
   const encryptedPassword = passwordManager.encryptPassword(password);
 
   if (userToUpdate?.email) {
@@ -118,35 +125,24 @@ export const updatePasswordUser = async (id: string, password: string) => {
     return new ApolloError(Errors.Validation.changePasswordUser);
   }
 
-  const response = await User.findOneAndUpdate(
-    { _id: id },
-    {
-      password: encryptedPassword,
-    },
-    { new: true },
-  );
+  const response = await usersRef.update({
+    password: encryptedPassword,
+    updatedAt: firestore.FieldValue.serverTimestamp(),
+  });
   return response;
 };
 
-export const deleteUser = async (id: string) => {
-  const response = await User.findOneAndUpdate(
-    {
-      _id: id,
-      deleted: false,
-    },
-    { deleted: true },
-    { new: true },
-  );
+export const deleteUser = async (email: string) => {
+  const usersRef = database.collection('users').doc(email);
+  const response = await usersRef.update({ deleted: true, isActive: false });
   return response;
 };
 
 export const sendEmailPassword = async (email: string) => {
-  const res = await User.findOneAndUpdate(
-    {
-      email,
-    },
-    { new: true },
-  );
+  const usersRef = database.collection('users').doc(email);
+  const doc = await usersRef.get();
+  const res = doc.data();
+
   if (res !== null) {
     fb.auth()
       .sendPasswordResetEmail(email)
@@ -168,13 +164,11 @@ export const confirmPasswordReset = (actionCode: string, newPassword: string) =>
         .confirmPasswordReset(actionCode, newPassword)
         .then(async () => {
           const encryptedPassword = passwordManager.encryptPassword(newPassword);
-          await User.findOneAndUpdate(
-            { email },
-            {
-              password: encryptedPassword,
-            },
-            { new: true },
-          );
+          const usersRef = database.collection('users').doc(email);
+          await usersRef.update({
+            password: encryptedPassword,
+            updatedAt: firestore.FieldValue.serverTimestamp(),
+          });
         })
         .catch(error => {
           console.error(error);
@@ -195,50 +189,31 @@ export const getUserByToken = async () => {
   const response = await fbAdmin.auth().verifyIdToken(idToken);
   if (!response) {
     return {
-      username: '',
+      email: '',
     };
   }
-  const userFound = await User.findById(response.uid);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const usersRef = database.collection('users').doc(response.email!);
+  const doc = await usersRef.get();
+  const userFound = doc.data();
   return {
-    username: userFound?.username,
+    email: userFound?.email,
     token: idToken,
   };
 };
 
-export const getUsers = async (filter = '') =>
-  User.find({
-    $and: [
-      {
-        $or: [
-          { username: { $regex: filter, $options: 'i' } },
-          { email: { $regex: filter, $options: 'i' } },
-          { firstName: { $regex: filter, $options: 'i' } },
-          { lastName: { $regex: filter, $options: 'i' } },
-        ],
-      },
-      {
-        deleted: false,
-      },
-    ],
-  }).exec();
-
-export const signInMobile = async (user: string, pass: string) => {
-  const logUser = await User.findOne({
-    $or: [{ username: formatUsername(user) }, { email: user }],
-  });
-
-  const currentUser = await fb.auth().currentUser;
-  if (!currentUser) return new ApolloError(Errors.SignInErrors.noUserFound);
-  const idToken = currentUser && (await currentUser.getIdToken(/* forceRefresh */ true));
-
-  return {
-    username: logUser?.username,
-    userToken: idToken,
-    userRole: logUser?.role,
-    firstName: logUser?.firstName,
-    lastName: logUser?.lastName,
-    email: logUser?.email,
-  };
+export const getUsers = async (filter = '') => {
+  const users: IUser[] = [];
+  const usersRef = database.collection('users');
+  const queryRef = await usersRef.where('deleted', '==', false).get();
+  queryRef.forEach((doc: any) => users.push(doc.data()));
+  if (filter !== '') {
+    const filteredUsers = users.filter(user =>
+      user.firstName.toLocaleLowerCase().includes(filter.toLocaleLowerCase()),
+    );
+    return filteredUsers;
+  }
+  return users;
 };
 
 export const signOut = () => {
@@ -264,6 +239,5 @@ export default {
   confirmPasswordReset,
   getUserByToken,
   getUsers,
-  signInMobile,
   signOut,
 };

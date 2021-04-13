@@ -11,7 +11,6 @@ export const userDefs = gql`
 
   type User {
     id: String!
-    username: String!
     email: String
     firstName: String!
     lastName: String!
@@ -24,7 +23,6 @@ export const userDefs = gql`
   }
 
   type VerifyUserToken {
-    username: String!
     token: String!
   }
 
@@ -41,13 +39,11 @@ export const userDefs = gql`
   }
 
   type Auth {
-    username: String
     userToken: String
     userRole: Roles
   }
 
   input UserInput {
-    username: String!
     email: String!
     firstName: String!
     lastName: String!
@@ -57,7 +53,6 @@ export const userDefs = gql`
 
   input UpdateUserInput {
     id: ID!
-    username: String!
     email: String!
     firstName: String!
     lastName: String!
@@ -72,7 +67,6 @@ export const userDefs = gql`
 
   type UserPage {
     id: String!
-    username: String!
     email: String
     firstName: String!
     lastName: String!
@@ -91,7 +85,7 @@ export const userDefs = gql`
 
   extend type Mutation {
     signUp(input: UserInput): User
-    signIn(username: String, password: String): Auth
+    signIn(email: String, password: String): Auth
     updateUser(input: UpdateUserInput): User
     updatePasswordUser(input: UpdatePasswordUserInput): User
     deleteUser(id: ID!): User

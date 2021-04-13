@@ -10,7 +10,6 @@ import admin from 'firebase-admin';
 import { GraphQLError } from 'graphql';
 import { applyMiddleware } from 'graphql-middleware';
 import { makeExecutableSchema } from 'graphql-tools';
-import mongoose from 'mongoose';
 dotenv.config();
 
 import ExecutableSchema from './graphql';
@@ -58,17 +57,6 @@ app.use(boom());
 app.use('/status', (req, res) => {
   res.send(`Healthy check ✅ \n`);
 });
-
-// Mongoose DB connection
-if (process.env.ENVIRONMENT !== 'test') {
-  mongoose
-    .connect(`${process.env.DATABASE_URL}`, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    })
-    .then(() => console.log('DB connected ✅'))
-    .catch(err => console.log('Oops! Something went wrong ❌', err));
-}
 
 // Routes
 app.use(router);

@@ -1,8 +1,6 @@
-import { Document } from 'mongoose';
-
 import { STATUS } from './enums';
 
-export interface IFood extends Document {
+export interface IFood {
   name: string;
   description: string;
   status: STATUS;
