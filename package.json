@@ -6,8 +6,10 @@
   "author": "Franco Marini",
   "license": "MIT",
   "scripts": {
-    "serve": "yarn build && firebase serve --only functions",
-    "shell": "yarn build && firebase functions:shell",
+    "serve": "yarn build && yarn firebase serve --only functions",
+    "deploy": "firebase deploy",
+    "shell": "yarn build && yarn firebase functions:shell",
+    "emulators:start": "yarn build && yarn firebase emulators:start",
     "start": "nodemon src/index.ts",
     "lint": "eslint ./src --ext .js,.ts",
     "lint:fix": "eslint ./src --ext .js,.ts --fix",

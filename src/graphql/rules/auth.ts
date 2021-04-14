@@ -3,7 +3,7 @@ import { rule } from 'graphql-shield';
 
 import passwordManager from '../../helpers/passwordManager';
 import * as Errors from '../../types/enums/error-messages';
-import { database } from '../..';
+import { database } from '../../server';
 
 const isValidPassword = rule()(async (parent, args: { email: string; password: string }) => {
   const usersRef = database.collection('users').doc(args.email);

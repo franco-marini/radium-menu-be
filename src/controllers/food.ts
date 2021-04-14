@@ -4,7 +4,7 @@ import { firestore } from 'firebase-admin';
 import { STATUS } from '../types/enums';
 import { Validation } from '../types/enums/error-messages';
 import { ICrateFood, IFood, IUpdateFood } from '../types/food';
-import { database } from '../';
+import { database } from '../server';
 
 const getUsersFoods = async (filter = '') => {
   const allFoods: IFood[] = [];

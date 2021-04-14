@@ -6,7 +6,7 @@ import passwordManager from '../helpers/passwordManager';
 import { ROLES } from '../types/enums';
 import { IUser } from '../types/user';
 import * as Errors from '../types/enums/error-messages';
-import { fb, fbAdmin, database } from '../';
+import { fb, fbAdmin, database } from '../server';
 
 export const signUp = async (
   email: string,

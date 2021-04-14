@@ -1,9 +1,9 @@
 import { AuthenticationError } from 'apollo-server-express';
 import { Request } from 'express';
 
-import { fbAdmin, database } from '../index';
 import * as Errors from '../types/enums/error-messages';
 import { IUser } from '../types/user';
+import { fbAdmin, database } from '../server';
 
 interface ContextParam extends Request {
   req: Request;
