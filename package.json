@@ -14,7 +14,8 @@
     "lint": "eslint ./src --ext .js,.ts",
     "lint:fix": "eslint ./src --ext .js,.ts --fix",
     "build": "tsc",
-    "serve-app": "node lib/src/index.js"
+    "serve-app": "node lib/src/index.js",
+    "logs": "yarn firebase functions:log"
   },
   "engines": {
     "node": "12"
@@ -30,6 +31,7 @@
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
     "eslint-plugin-prettier": "^3.3.1",
     "express": "^4.17.1",
     "express-boom": "^3.0.0",
@@ -37,6 +39,7 @@
     "firebase": "^8.3.1",
     "firebase-admin": "^9.5.0",
     "firebase-functions": "^3.13.2",
+    "firebase-tools": "^9.8.0",
     "graphql": "^15.5.0",
     "graphql-middleware": "^6.0.4",
     "graphql-shield": "^7.5.0",
@@ -55,12 +58,10 @@
     "@types/nodemailer": "^6.4.0",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
     "@typescript-eslint/parser": "^4.15.2",
-    "dotenv": "^8.2.0",
     "eslint": "^7.6.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-import": "^2.22.0",
-    "firebase-tools": "^9.8.0",
     "husky": "^4.3.8",
     "nodemon": "^2.0.7",
     "prettier": "^2.2.1",

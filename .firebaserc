@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "radium-menu-dev"
+    "default": "radium-menu-dev",
+    "radium-menu-dev": "radium-menu-dev"
   }
 }
