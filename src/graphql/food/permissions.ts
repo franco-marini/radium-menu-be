@@ -4,7 +4,7 @@ import rules from '../rules';
 export const permissionsFood = {
   Query: {
     allFoods: and(rules.isAuthenticated, or(rules.roles.isChef)),
-    usersFoods: and(rules.isAuthenticated, or(rules.roles.isUser)),
+    usersFoods: and(rules.isAuthenticated, or(rules.roles.isUser, rules.roles.isChef)),
   },
   Mutation: {
     createFood: and(rules.isAuthenticated, or(rules.roles.isChef)),

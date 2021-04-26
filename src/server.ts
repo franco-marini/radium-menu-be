@@ -33,6 +33,7 @@ export const database = fbAdmin.firestore();
 const app = express();
 const router = Router();
 const schema = makeExecutableSchema(ExecutableSchema);
+const port = process.env.PORT_BE || 4000;
 
 const server = new ApolloServer({
   schema: applyMiddleware(schema, permissions),
@@ -62,5 +63,11 @@ app.use(router);
 router.get('/', (req: Request, res: Response) => {
   res.send('Server running again! ✅ \n');
 });
+
+if (process.env.DEBUG === 'true') {
+  app.listen(port, () => {
+    console.log(`Server started at http://localhost:${port}/graphql ✅`);
+  });
+}
 
 export default app;

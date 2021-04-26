@@ -193,7 +193,7 @@ export const getUserByToken = async () => {
     };
   }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const usersRef = database.collection('users').doc(response.email!);
+  const usersRef = database.collection('users').doc(response.uid!);
   const doc = await usersRef.get();
   const userFound = doc.data();
   return {
