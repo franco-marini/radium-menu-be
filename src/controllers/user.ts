@@ -51,9 +51,8 @@ export const signIn = async (user: string, pass: string) => {
     const idToken = currentUser && (await currentUser.getIdToken(/* forceRefresh */ true));
 
     return {
-      email: logUser.email,
       userToken: idToken,
-      userRole: logUser.role,
+      logUser,
     };
   }
   return new ApolloError(Errors.SignInErrors.noUserFound);

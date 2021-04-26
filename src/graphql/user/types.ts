@@ -14,12 +14,9 @@ export const userDefs = gql`
     email: String
     firstName: String!
     lastName: String!
-    password: String!
     isActive: Boolean!
     deleted: Boolean!
     role: Roles!
-    createdAt: Date!
-    updatedAt: Date!
   }
 
   type VerifyUserToken {
@@ -39,8 +36,8 @@ export const userDefs = gql`
   }
 
   type Auth {
+    logUser: User
     userToken: String
-    userRole: Roles
   }
 
   input UserInput {
